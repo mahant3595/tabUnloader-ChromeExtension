@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TabUnloader</title>
+    <link rel="stylesheet" href="common.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <img src="icons/icon32.png" alt="" width="22" height="22" />
+      <div class="header-text">
+        <h1>TabUnloader</h1>
+        <p id="header-status" class="muted small">Loading…</p>
+      </div>
+      <button id="open-options" class="btn compact" type="button" title="Open settings" aria-label="Open settings">
+        ⚙
+      </button>
+    </header>
+
+    <main>
+      <!-- Startup protection -->
+      <section class="card section" aria-labelledby="startup-heading">
+        <div class="row between">
+          <h2 id="startup-heading">Startup protection</h2>
+          <span id="startup-badge" class="badge">…</span>
+        </div>
+        <label class="row between toggle-row">
+          <span>Load active tab automatically on startup</span>
+          <span class="switch">
+            <input id="startup-toggle" type="checkbox" role="switch" />
+            <span class="track"></span>
+          </span>
+        </label>
+        <p id="startup-note" class="muted small">
+          Chrome may begin loading restored pages before extensions can intervene, and it never
+          allows discarding the tab in focus. TabUnloader discards restored tabs as early as the
+          APIs permit — see Settings → limitations.
+        </p>
+      </section>
+
+      <!-- Inactivity controls -->
+      <section class="card section" aria-labelledby="inactivity-heading">
+        <div class="row between">
+          <h2 id="inactivity-heading">Inactivity unloading</h2>
+          <span id="auto-badge" class="badge">…</span>
+        </div>
+        <label class="row between toggle-row">
+          <span>Unload inactive tabs automatically</span>
+          <span class="switch">
+            <input id="auto-toggle" type="checkbox" role="switch" />
+            <span class="track"></span>
+          </span>
+        </label>
+        <label class="row between select-row" for="timeout-select">
+          <span>Unload after</span>
+          <select id="timeout-select">
+            <option value="30">30 seconds</option>
+            <option value="60">1 minute</option>
+            <option value="120">2 minutes</option>
+            <option value="300">5 minutes (default)</option>
+            <option value="600">10 minutes</option>
+            <option value="900">15 minutes</option>
+            <option value="1800">30 minutes</option>
+            <option value="3600">1 hour</option>
+            <option value="custom">Custom…</option>
+            <option value="0">Never automatically unload</option>
+          </select>
+        </label>
+        <div class="row gap">
+          <button id="pause-btn" class="btn block" type="button">Pause automatic unloading</button>
+        </div>
+        <p id="custom-note" class="muted small hidden">
+          Custom timeout in use. Edit it in <button id="custom-edit" class="linklike" type="button">Settings</button>.
+        </p>
+      </section>
+
+      <!-- Dashboard -->
+      <section class="card section" aria-labelledby="dashboard-heading">
+        <h2 id="dashboard-heading">Dashboard</h2>
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat"><span id="stat-total" class="stat-value">–</span><span class="stat-label">Total tabs</span></div>
+          <div class="stat"><span id="stat-loaded" class="stat-value">–</span><span class="stat-label">Loaded</span></div>
+          <div class="stat"><span id="stat-unloaded" class="stat-value">–</span><span class="stat-label">Unloaded</span></div>
+          <div class="stat"><span id="stat-protected" class="stat-value">–</span><span class="stat-label">Protected</span></div>
+        </div>
+        <p class="muted small" id="stat-detail">–</p>
+        <p class="muted small hidden" id="memory-estimate"></p>
+      </section>
+
+      <!-- Still loaded: why each tab is holding memory -->
+      <section class="card section hidden" id="loaded-section" aria-labelledby="loaded-heading">
+        <h2 id="loaded-heading">Still loaded</h2>
+        <ul id="loaded-list" class="loaded-list"></ul>
+        <p id="loaded-tip" class="muted small hidden">
+          Tip: set the timeout to 30 seconds in Settings and review pinned-tab protection and
+          exclusions to squeeze out the last tabs.
+        </p>
+      </section>
+
+      <!-- Current tab -->
+      <section class="card section" aria-labelledby="tab-heading">
+        <div class="row between">
+          <h2 id="tab-heading">Current tab</h2>
+          <span id="tab-badge" class="badge">…</span>
+        </div>
+        <p id="tab-title" class="tab-title">–</p>
+        <p id="tab-url" class="muted small truncate">–</p>
+      </section>
+
+      <!-- Actions -->
+      <section class="card section actions" aria-labelledby="actions-heading">
+        <h2 id="actions-heading">Actions</h2>
+        <div class="action-grid">
+          <button id="unload-current" class="btn" type="button">Unload this tab</button>
+          <button id="unload-all" class="btn" type="button">Unload all eligible inactive tabs</button>
+          <button id="protect-current" class="btn" type="button">Protect this tab</button>
+          <button id="keep-loaded" class="btn" type="button">Keep this tab loaded</button>
+        </div>
+        <p class="muted small">
+          Tabs are never closed — unloading only frees memory, and the page reloads when you
+          activate the tab again.
+        </p>
+      </section>
+
+      <div class="row gap footer-actions">
+        <button id="copy-diagnostics" class="btn compact" type="button" title="Copy extension state to the clipboard for troubleshooting">
+          Copy diagnostics
+        </button>
+      </div>
+
+      <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

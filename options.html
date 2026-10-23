@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TabUnloader — Settings</title>
+    <link rel="stylesheet" href="common.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="page-header">
+        <img src="icons/icon128.png" alt="" width="40" height="40" />
+        <div>
+          <h1>TabUnloader</h1>
+          <p class="muted">Smart Tab &amp; Memory Manager — settings are saved locally and restored after restarts.</p>
+        </div>
+        <span id="save-indicator" class="badge" aria-live="polite"></span>
+      </header>
+
+      <main>
+        <!-- 1. Inactivity timeout -->
+        <section class="card section" aria-labelledby="h-inactivity">
+          <h2 id="h-inactivity">Inactivity timeout</h2>
+          <label class="row between toggle-row">
+            <span>Unload inactive tabs automatically</span>
+            <span class="switch">
+              <input id="autoUnload" type="checkbox" role="switch" />
+              <span class="track"></span>
+            </span>
+          </label>
+          <div class="grid2">
+            <label class="field">
+              <span>Unload after</span>
+              <select id="timeoutPreset">
+                <option value="30">30 seconds</option>
+                <option value="60">1 minute</option>
+                <option value="120">2 minutes</option>
+                <option value="300">5 minutes (default)</option>
+                <option value="600">10 minutes</option>
+                <option value="900">15 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="custom">Custom…</option>
+                <option value="0">Never automatically unload</option>
+              </select>
+            </label>
+            <label class="field" id="customField">
+              <span>Custom timeout (seconds, 10–604800)</span>
+              <input id="customSeconds" type="number" min="10" max="604800" step="1" />
+            </label>
+          </div>
+          <p class="muted small">
+            Changes apply immediately — no restart needed. Shorter timeouts are checked by the
+            30-second scheduler, so actual unloading can lag the setting by up to ~30 seconds.
+            Manual controls (popup) keep working even when automatic unloading is off.
+          </p>
+        </section>
+
+        <!-- 2. Startup protection -->
+        <section class="card section" aria-labelledby="h-startup">
+          <h2 id="h-startup">Startup protection, session restoration &amp; tab groups</h2>
+          <label class="row between toggle-row">
+            <span>Startup protection (keep restored tabs unloaded until activated)</span>
+            <span class="switch">
+              <input id="startupProtection" type="checkbox" role="switch" />
+              <span class="track"></span>
+            </span>
+          </label>
+          <label class="row between toggle-row">
+            <span>Load active tab automatically on startup</span>
+            <span class="switch">
+              <input id="loadActiveTabOnStartup" type="checkbox" role="switch" />
+              <span class="track"></span>
+            </span>
+          </label>
+          <label class="row between toggle-row">
+            <span>Group load guard — when a tab group is opened, immediately unload its other tabs again</span>
+            <span class="switch">
+              <input id="groupTabGuard" type="checkbox" role="switch" />
+              <span class="track"></span>
+            </span>
+          </label>
+          <details>
+            <summary>Known Chrome API limitations for startup protection</summary>
+            <ul class="muted small">
+              <li>
+                Chrome begins loading session-restored pages before an extension service worker can
+                run, and no supported API (tabs, webNavigation, sessions, declarativeNetRequest)
+                can pause or cancel those first requests. TabUnloader therefore discards restored
+                tabs <em>as early as the APIs permit</em> — this reduces memory usage but cannot
+                guarantee zero initial network requests.
+              </li>
+              <li>
+                <code>chrome.tabs.discard()</code> refuses to discard the tab that is currently in
+                focus. With "Load active tab automatically on startup" OFF, the initially selected
+                tab is discarded at the first opportunity after you switch away from it.
+              </li>
+              <li>
+                Chrome may lazy-load restored tabs over time; whenever a restored tab starts loading
+                in the background, TabUnloader discards it (up to 3 attempts per tab).
+              </li>
+              <li>
+                Chrome eagerly loads <em>every</em> tab inside a tab group when you open the group —
+                there is no Chrome setting to stop this. With the group load guard ON (default),
+                TabUnloader immediately unloads the background members again after Chrome loads
+                them: the tab you are viewing stays loaded, and tabs you deliberately opened
+                yourself (e.g. middle-click) are left alone. Note this does not prevent the
+                brief load itself, only keeps it from using memory afterwards.
+              </li>
+              <li>
+                Tabs that are active in their own window (including background windows) cannot be
+                discarded by Chrome while that window exists.
+              </li>
+            </ul>
+          </details>
+        </section>
+
+        <!-- 3. Protection rules -->
+        <section class="card section" aria-labelledby="h-protection">
+          <h2 id="h-protection">Protection rules</h2>
+          <label class="row between toggle-row">
+            <span>Protect pinned tabs from automatic unloading</span>
+            <span class="switch">
+              <input id="protectPinned" type="checkbox" role="switch" />
+              <span class="track"></span>
+            </span>
+          </label>
+          <label class="row between toggle-row">
+            <span>Protect tabs that are playing audio</span>
+            <span class="switch">
+              <input id="protectAudio" type="checkbox" role="switch" />
+              <span class="track"></span>
+            </span>
+          </label>
+          <fieldset class="field">
+            <legend>"Keep This Tab Loaded" protects the tab…</legend>
+            <label class="radio"><input type="radio" name="keepLoadedMode" value="temporary" /> For this session (until Chrome closes)</label>
+            <label class="radio"><input type="radio" name="keepLoadedMode" value="permanent" /> Permanently, by adding its website to the exclusion list below</label>
+          </fieldset>
+          <p class="muted small">
+            Chrome cannot reliably detect unsaved form data, active video calls, or background
+            work, so those situations are protected only when they surface as pinned/audio tabs or
+            through rules you add here. The active tab is never unloaded automatically.
+          </p>
+        </section>
+
+        <!-- 4. Website exclusions -->
+        <section class="card section" aria-labelledby="h-exclusions">
+          <h2 id="h-exclusions">Website exclusions</h2>
+          <p class="muted small">
+            Tabs on these sites are never unloaded automatically (startup protection also skips
+            them). Excluded tabs are never loaded automatically either — exclusion only prevents
+            unloading.
+          </p>
+          <div class="row add-row">
+            <input id="exclusionInput" type="text" placeholder="mail.google.com  ·  *.example.com  ·  localhost" aria-label="New exclusion pattern" />
+            <button id="addExclusion" class="btn primary" type="button">Add</button>
+          </div>
+          <p id="exclusionError" class="error-text" role="alert"></p>
+          <ul id="exclusionList" class="chip-list"></ul>
+          <p class="muted small">
+            Pattern meaning: <code>mail.google.com</code> matches exactly that host;
+            <code>*.example.com</code> matches example.com and all of its subdomains; a leading
+            scheme (<code>https://</code>) or a port is allowed and ignored; paths are rejected.
+          </p>
+        </section>
+
+        <!-- 5. Appearance -->
+        <section class="card section" aria-labelledby="h-appearance">
+          <h2 id="h-appearance">Appearance</h2>
+          <label class="field narrow">
+            <span>Theme</span>
+            <select id="theme">
+              <option value="system">Match system</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+        </section>
+
+        <!-- 6. Dashboard -->
+        <section class="card section" aria-labelledby="h-dashboard">
+          <h2 id="h-dashboard">Dashboard</h2>
+          <label class="row between toggle-row">
+            <span>Show a rough memory estimate in the popup</span>
+            <span class="switch">
+              <input id="showMemoryEstimate" type="checkbox" role="switch" />
+              <span class="track"></span>
+            </span>
+          </label>
+          <label class="field narrow">
+            <span>Assumed memory per unloaded tab (MB)</span>
+            <input id="estimateMBPerTab" type="number" min="1" max="4096" step="1" />
+          </label>
+          <p class="muted small">
+            Chrome does not expose reliable per-tab memory usage to extensions. The estimate is a
+            simple multiplication you configure — it is not a measurement. For real numbers, open
+            Chrome's built-in Task Manager (Menu → More tools → Task Manager).
+          </p>
+        </section>
+
+        <!-- 7. Privacy -->
+        <section class="card section" aria-labelledby="h-privacy">
+          <h2 id="h-privacy">Privacy</h2>
+          <ul class="muted small privacy-list">
+            <li>TabUnloader runs entirely locally. No account, no servers.</li>
+            <li>No browsing history, URLs, or page contents ever leave your browser.</li>
+            <li>No analytics, tracking, or advertisements; no third-party dependencies.</li>
+            <li>
+              Permissions used: <code>tabs</code> (inspect tab state and discard tabs),
+              <code>storage</code> (settings), <code>alarms</code> (scheduled sweeps). No website
+              access permissions are requested.
+            </li>
+            <li>
+              Warning: discarding a tab frees memory but discards the page's JavaScript state —
+              unsaved form input or in-progress work on that page may be lost when it reloads.
+            </li>
+          </ul>
+        </section>
+
+        <!-- 8. Reset -->
+        <section class="card section" aria-labelledby="h-reset">
+          <h2 id="h-reset">Reset</h2>
+          <div class="row between">
+            <p class="muted small" style="margin: 0">Restore all settings to their defaults (5-minute timeout, startup protection on).</p>
+            <button id="resetSettings" class="btn danger" type="button">Reset settings</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="muted small page-footer">
+        TabUnloader never closes tabs. It only discards pages with Chrome's supported API, and
+        tabs reload when you activate them again.
+      </footer>
+    </div>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

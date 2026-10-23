@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "TabUnloader — Smart Tab & Memory Manager",
+  "version": "1.0.0",
+  "description": "Keeps every tab open but loads a page only when you open it. Unloads inactive tabs after a configurable timeout to reduce Chrome's memory usage. Never closes tabs.",
+  "minimum_chrome_version": "105",
+  "permissions": ["tabs", "storage", "alarms"],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TabUnloader",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

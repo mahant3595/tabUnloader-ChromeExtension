@@ -1,0 +1,13 @@
+{
+  "name": "tabunloader",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling metadata for TabUnloader (Chrome ignores this file).",
+  "scripts": {
+    "check": "node tools/check.mjs",
+    "selftest": "node tools/selftest.mjs",
+    "simulate": "node tools/simulate.mjs",
+    "icons": "node tools/generate-icons.mjs"
+  }
+}
